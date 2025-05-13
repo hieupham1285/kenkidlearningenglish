@@ -23,7 +23,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 export default function Practise() {
   // State lưu toàn bộ cặp từ lấy từ file
-  const [pairs, setPairs] = useState<Pair[]>([]);
+  const [setPairs] = useState<Pair[]>([]);
   // State kiểm soát trạng thái loading khi đang tải dữ liệu
   const [loading, setLoading] = useState(true);
   // State lưu thông báo lỗi nếu có
