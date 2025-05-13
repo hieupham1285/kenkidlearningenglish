@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 
 // Đường dẫn tới file từ vựng tiếng Anh và tiếng Việt trên GitHub Gist
 const EN_URL = "https://gist.githubusercontent.com/hieupham1285/cacfd7d27ad6002f9107762d19b2518f/raw/English.txt";
@@ -22,8 +22,6 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export default function Practise() {
-  // State lưu toàn bộ cặp từ lấy từ file
-  const [pairs, setPairs] = useState<Pair[]>([]);
   // State kiểm soát trạng thái loading khi đang tải dữ liệu
   const [loading, setLoading] = useState(true);
   // State lưu thông báo lỗi nếu có
@@ -61,7 +59,6 @@ export default function Practise() {
       for (let i = 0; i < minLen; ++i) {
         allPairs.push({ en: enArr[i], vi: viArr[i] }); // Tạo mảng cặp từ
       }
-      setPairs(allPairs); // Lưu toàn bộ cặp từ vào state
 
       // Lấy ngẫu nhiên 5 cặp từ cho 1 lần chơi
       const randomPairs = shuffle(allPairs).slice(0, 5);
@@ -77,10 +74,11 @@ export default function Practise() {
   // useEffect theo dõi khi người dùng chọn đủ 1 từ ở mỗi cột
   useEffect(() => {
     if (selectedLeft !== null && selectedRight !== null) {
-      // Kiểm tra nếu cặp chọn đúng (so sánh nghĩa tiếng Việt)
-      if (
-        leftWords[selectedLeft].vi === rightWords[selectedRight].vi
-      ) {
+      const leftWord = leftWords[selectedLeft];
+      const rightWord = rightWords[selectedRight];
+      
+      // Kiểm tra null và so sánh nghĩa tiếng Việt
+      if (leftWord && rightWord && leftWord.vi === rightWord.vi) {
         setMatched((prev) => [...prev, selectedLeft]); // Đánh dấu đã ghép đúng
       }
       // Sau 0.5s sẽ reset lựa chọn để người dùng chọn tiếp
@@ -90,6 +88,11 @@ export default function Practise() {
       }, 500);
     }
   }, [selectedLeft, selectedRight, leftWords, rightWords]);
+
+  // Tối ưu việc tìm index của cặp từ đã matched
+  const getMatchedIndex = useMemo(() => {
+    return (pair: Pair) => leftWords.findIndex((p) => p.vi === pair.vi);
+  }, [leftWords]);
 
   // Hiển thị loading khi đang tải dữ liệu
   if (loading) return <div style={{ padding: 32, textAlign: "center" }}>Đang tải dữ liệu...</div>;
@@ -134,8 +137,7 @@ export default function Practise() {
         {/* Cột phải: tiếng Việt */}
         <div>
           {rightWords.map((pair, idx) => {
-            // Tìm index cặp bên trái đã matched
-            const leftIdx = leftWords.findIndex((p) => p.vi === pair.vi);
+            const leftIdx = getMatchedIndex(pair);
             const isMatched = matched.includes(leftIdx);
             return (
               <button
